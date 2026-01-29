@@ -34,6 +34,7 @@ export class TankScene extends Phaser.Scene {
     this.physics.add.existing(this.tankBase);
 
     const body = this.tankBase.body as Phaser.Physics.Arcade.Body;
+    body.setSize(this.tankBase.width, this.tankBase.height);
     body.setCollideWorldBounds(true);
     body.setDrag(1200, 1200);
     body.setMaxVelocity(240, 240);
@@ -198,8 +199,10 @@ export class TankScene extends Phaser.Scene {
     shell.setData('lifespan', this.time.now + 4000);
 
     const body = shell.body as Phaser.Physics.Arcade.Body;
+    body.enable = true;
     body.setAllowGravity(false);
     body.reset(startX, startY);
+    body.setCircle(6);
 
     const shellSpeed = 420;
     body.setVelocity(Math.cos(this.turret.rotation) * shellSpeed, Math.sin(this.turret.rotation) * shellSpeed);
