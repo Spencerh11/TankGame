@@ -7,6 +7,7 @@ type Projectile = Phaser.Types.Physics.Arcade.ImageWithDynamicBody & {
 export class TankScene extends Phaser.Scene {
   private tankBase!: Phaser.GameObjects.Rectangle;
   private turret!: Phaser.GameObjects.Rectangle;
+  private keys!: Record<'W' | 'A' | 'S' | 'D' | 'R', Phaser.Input.Keyboard.Key>;
   private keys!: Record<string, Phaser.Input.Keyboard.Key>;
   private walls!: Phaser.Physics.Arcade.StaticGroup;
   private projectiles!: Phaser.Physics.Arcade.Group;
@@ -41,6 +42,31 @@ export class TankScene extends Phaser.Scene {
     this.turret = this.add.rectangle(this.tankBase.x, this.tankBase.y, 40, 12, 0x91e7a8);
     this.turret.setOrigin(0.2, 0.5);
 
+    const keyboard = this.input.keyboard!;
+    this.keys = keyboard.addKeys('W,A,S,D,R') as Record<
+      'W' | 'A' | 'S' | 'D' | 'R',
+      Phaser.Input.Keyboard.Key
+    >;
+
+    this.projectiles = this.physics.add.group({
+      allowGravity: false,
+    });
+
+    this.physics.add.collider(this.tankBase, this.walls);
+    this.physics.add.collider(
+      this.projectiles,
+      this.walls,
+      this.handleProjectileWallCollision as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback,
+      undefined,
+      this,
+    );
+    this.physics.add.overlap(
+      this.projectiles,
+      this.tankBase,
+      this.handleProjectileHit as Phaser.Types.Physics.Arcade.ArcadePhysicsCallback,
+      undefined,
+      this,
+    );
     this.keys = this.input.keyboard.addKeys('W,A,S,D,R') as Record<string, Phaser.Input.Keyboard.Key>;
 
     this.projectiles = this.physics.add.group({
@@ -168,6 +194,13 @@ export class TankScene extends Phaser.Scene {
     const startX = this.tankBase.x + Math.cos(this.turret.rotation) * 30;
     const startY = this.tankBase.y + Math.sin(this.turret.rotation) * 30;
 
+    const projectile = this.projectiles.get(startX, startY, 'projectile') as Projectile | null;
+    if (!projectile) {
+      return;
+    }
+
+    projectile.setActive(true);
+    projectile.setVisible(true);
     const projectile = this.physics.add.image(startX, startY, 'projectile') as Projectile;
     projectile.setCircle(6);
     projectile.setCollideWorldBounds(false);
@@ -176,6 +209,12 @@ export class TankScene extends Phaser.Scene {
     projectile.setData('armed', false);
     projectile.setData('lifespan', this.time.now + 4000);
 
+    const body = projectile.body as Phaser.Physics.Arcade.Body;
+    body.setAllowGravity(false);
+    body.reset(startX, startY);
+
+    const speed = 420;
+    body.setVelocity(Math.cos(this.turret.rotation) * speed, Math.sin(this.turret.rotation) * speed);
     const speed = 420;
     projectile.setVelocity(Math.cos(this.turret.rotation) * speed, Math.sin(this.turret.rotation) * speed);
 
