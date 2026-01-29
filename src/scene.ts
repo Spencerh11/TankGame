@@ -8,6 +8,7 @@ export class TankScene extends Phaser.Scene {
   private tankBase!: Phaser.GameObjects.Rectangle;
   private turret!: Phaser.GameObjects.Rectangle;
   private keys!: Record<'W' | 'A' | 'S' | 'D' | 'R', Phaser.Input.Keyboard.Key>;
+  private keys!: Record<string, Phaser.Input.Keyboard.Key>;
   private walls!: Phaser.Physics.Arcade.StaticGroup;
   private projectiles!: Phaser.Physics.Arcade.Group;
   private hpText!: Phaser.GameObjects.Text;
@@ -66,6 +67,16 @@ export class TankScene extends Phaser.Scene {
       undefined,
       this,
     );
+    this.keys = this.input.keyboard.addKeys('W,A,S,D,R') as Record<string, Phaser.Input.Keyboard.Key>;
+
+    this.projectiles = this.physics.add.group({
+      classType: Phaser.Physics.Arcade.Image,
+      runChildUpdate: false,
+    });
+
+    this.physics.add.collider(this.tankBase, this.walls);
+    this.physics.add.collider(this.projectiles, this.walls, this.handleProjectileWallCollision, undefined, this);
+    this.physics.add.overlap(this.projectiles, this.tankBase, this.handleProjectileHit, undefined, this);
 
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       if (pointer.leftButtonDown()) {
@@ -190,6 +201,7 @@ export class TankScene extends Phaser.Scene {
 
     projectile.setActive(true);
     projectile.setVisible(true);
+    const projectile = this.physics.add.image(startX, startY, 'projectile') as Projectile;
     projectile.setCircle(6);
     projectile.setCollideWorldBounds(false);
     projectile.setBounce(1, 1);
@@ -203,6 +215,10 @@ export class TankScene extends Phaser.Scene {
 
     const speed = 420;
     body.setVelocity(Math.cos(this.turret.rotation) * speed, Math.sin(this.turret.rotation) * speed);
+    const speed = 420;
+    projectile.setVelocity(Math.cos(this.turret.rotation) * speed, Math.sin(this.turret.rotation) * speed);
+
+    this.projectiles.add(projectile);
 
     this.time.delayedCall(150, () => {
       if (projectile.active) {
