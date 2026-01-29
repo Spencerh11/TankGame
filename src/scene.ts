@@ -230,12 +230,14 @@ export class TankScene extends Phaser.Scene {
       return;
     }
 
-    const projectile = projectileObject as Projectile;
-    if (!projectile.getData('armed')) {
+    const hitTank = projectileObject === this.tankBase || target === this.tankBase;
+    if (!hitTank) {
       return;
     }
 
-    if (target !== this.tankBase) {
+    const projectile =
+      projectileObject === this.tankBase ? (target as Projectile) : (projectileObject as Projectile);
+    if (!projectile.getData('armed')) {
       return;
     }
 
